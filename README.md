@@ -60,23 +60,23 @@ Dates use `YYYY-MM-DD`. Scores are nonnegative integers; ratings are finite posi
 
 The statistical method is based on **Suzuki, A. K., Salasar, L. E. B., Leite, J. G., and Louzada-Neto, F. (2010). [A Bayesian approach for predicting match outcomes: The 2006 (Association) Football World Cup](https://doi.org/10.1057/jors.2009.127). *Journal of the Operational Research Society*, 61(10), 1530-1539.** The predictive parameters below correspond to equations 12 and 14, and the match-outcome aggregation to equations 15-17.
 
-For a team with historical goal counts $x_i$ against opponents rated $R_i$, and a new opponent rated $R_*$, the core calculation is:
+For a team with historical goal counts $x_i$ against opponents rated $R_i$, and a new opponent rated $R_{\mathrm{new}}$, the core calculation is:
 
-$$
+```math
 r = \frac{1}{2} + \sum_i x_i + w s,
 \qquad
-\beta = \sum_i \frac{1}{R_i} + \frac{w}{R_*},
+\beta = \sum_i \frac{1}{R_i} + \frac{w}{R_{\mathrm{new}}},
 \qquad
-p = \frac{\beta}{\beta + 1/R_*}.
-$$
+p = \frac{\beta}{\beta + 1/R_{\mathrm{new}}}.
+```
 
 The predicted goal count follows:
 
-$$
-X_* \sim \operatorname{NegativeBinomial}(r,p).
-$$
+```math
+X_{\mathrm{new}} \sim \mathrm{NegativeBinomial}(r,p).
+```
 
-Setting $\theta=R_{\mathrm{team}}\lambda$ in the paper gives $X_i \mid \theta \sim \operatorname{Poisson}(\theta/R_i)$ and a Gamma posterior for $\theta$ with shape $r$ and rate $\beta$. The half-unit shape offset comes from the Jeffreys baseline. The optional power-prior term treats $s$ as a suggested goal count against the current opponent, weighted by $w$. Here $w$ is the aggregate expert weight ($a_0$ times the number of experts in the paper), and $s$ is their mean suggestion. The original default, retained here, is **$w=0$**, so the explicit expert suggestion is inactive. A positive rate from historical matches is then required for a proper posterior.
+Setting $\theta=R_{\mathrm{team}}\lambda$ in the paper gives $X_i \mid \theta \sim \mathrm{Poisson}(\theta/R_i)$ and a Gamma posterior for $\theta$ with shape $r$ and rate $\beta$. The half-unit shape offset comes from the Jeffreys baseline. The optional power-prior term treats $s$ as a suggested goal count against the current opponent, weighted by $w$. Here $w$ is the aggregate expert weight ($a_0$ times the number of experts in the paper), and $s$ is their mean suggestion. The original default, retained here, is **$w=0$**, so the explicit expert suggestion is inactive. A positive rate from historical matches is then required for a proper posterior.
 
 For example, `--prior-weight 1 --prior-goals 1.5` adds one weighted pseudo-match for each team. This small demonstration uses the same suggestion for both sides, simplifying the paper's separate expert predictions. It covers match-level prediction rather than the paper's full World Cup simulation and experiments.
 
@@ -88,10 +88,10 @@ SciPy's [`nbinom`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.st
 
 Each goal distribution is truncated using an inverse survival function, with its remaining tail checked explicitly. The default combined omitted probability is at most `1e-10`. Probabilities are **not renormalized**, and missing tail mass is not assigned to the draw outcome:
 
-$$
+```math
 P(\text{home win})+P(\text{draw})+P(\text{away win})
 +P(\text{omitted}) \approx 1.
-$$
+```
 
 A distribution requiring more than 200 goals of support raises an error instead of silently clipping it. The tests check the original equations, the Gamma-Poisson mixture, probability accounting, symmetry, rating-scale invariance, temporal input rules, malformed inputs and the complete command-line example.
 
